@@ -66,6 +66,12 @@ impl Block {
     pub fn valid(&self) -> bool {
         self.hash().starts_with(HASH_PREFIX)
     }
+
+    pub fn mine(&mut self) {
+        while !self.valid() {
+            self.proof += 1
+        }
+    }
 }
 
 
@@ -101,4 +107,13 @@ fn test_validity() {
     let genesis_block = Block::genesis();
 
     assert_eq!(genesis_block.valid(), true);
+}
+
+#[test]
+fn test_mining() {
+    let previous_block = Block::genesis();
+    let mut block = Block::new(Vec::new(), &previous_block);
+
+    block.mine();
+    assert_eq!(block.valid(), true);
 }
