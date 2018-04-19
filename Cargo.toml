@@ -1,5 +1,5 @@
 [package]
-name = "innoq-blockchain-rust-one"
+name = "rustychain"
 version = "0.1.0"
 authors = ["Daniel Westheide <daniel.westheide@innoq.com>"]
 
