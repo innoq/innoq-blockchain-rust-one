@@ -9,15 +9,15 @@ use chain::Block;
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-struct NodeInfo {
-    node_id: String,
+struct NodeInfo<'a> {
+    node_id: &'a String,
     current_block_height: usize,
 }
 
-impl NodeInfo {
-    pub fn new(server: &Server) -> NodeInfo {
+impl<'a> NodeInfo <'a> {
+    pub fn new(server: &'a Server) -> NodeInfo<'a> {
         NodeInfo {
-            node_id: server.node_id.clone(),
+            node_id: &server.node_id,
             current_block_height: server.rusty_chain.len(),
         }
     }
