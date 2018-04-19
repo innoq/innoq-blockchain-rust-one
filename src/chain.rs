@@ -79,7 +79,7 @@ impl Block {
         let duration = end.duration_since(start).unwrap();
         let nanos:u64 = duration.as_secs() * 1_000_000_000 + (duration.subsec_nanos() as u64);
 
-        let hash_rate = (self.proof*1_000_000_00)/nanos;
+        let hash_rate = (self.proof*1_000_000_000)/nanos;
 
         (nanos, hash_rate)
     }
