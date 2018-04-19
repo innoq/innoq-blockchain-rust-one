@@ -11,7 +11,7 @@ use chain::Block;
 #[serde(rename_all = "camelCase")]
 struct NodeInfo {
     node_id: String,
-    current_block_height: u32,
+    current_block_height: usize,
 }
 
 #[derive(Serialize)]
@@ -56,7 +56,7 @@ pub fn route(server: &Server, request: &Request) -> Response {
 fn node_info(server: &Server) -> Response {
     Response::json(&NodeInfo {
         node_id: server.node_id.clone(),
-        current_block_height: 0,
+        current_block_height: server.rusty_chain.len(),
     })
 }
 
