@@ -4,6 +4,8 @@ extern crate crypto_hash;
 use crypto_hash::{Algorithm, hex_digest};
 use std::time::{SystemTime, UNIX_EPOCH};
 
+const HASH_PREFIX: &str = "0000";
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Transaction {
     id:String,
@@ -60,6 +62,10 @@ impl Block {
     pub fn hash(&self) -> String {
         hex_digest(Algorithm::SHA256, self.to_json().as_bytes())
     }
+
+    pub fn valid(&self) -> bool {
+        self.hash().starts_with(HASH_PREFIX)
+    }
 }
 
 
@@ -88,4 +94,11 @@ fn test_new_empty_block() {
     assert_eq!(block.transactions.len(), 0);
     assert_eq!(block.index, 2);
     assert_eq!(block.previous_block_hash, previous_block.hash());
+}
+
+#[test]
+fn test_validity() {
+    let genesis_block = Block::genesis();
+
+    assert_eq!(genesis_block.valid(), true);
 }
