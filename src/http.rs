@@ -11,10 +11,18 @@ struct NodeInfo {
     current_block_height: u32
 }
 
-pub fn route(request: &Request) -> Response {
+pub struct Server {
+    pub node_id: String
+}
+
+pub fn route(server: &Server, request: &Request) -> Response {
     match request.url().as_str() {
-        "/" => rouille::Response::json(&NodeInfo { node_id: "fobbar".to_owned(), current_block_height: 0 }),
-        "/blocksss" => rouille::Response::text("blocks"),
-        _ => rouille::Response::text("not found").with_status_code(404)
+        "/" => node_info(server),
+        "/blocks" => Response::text("blocks"),
+        _ => Response::text("not found").with_status_code(404)
     }
+}
+
+fn node_info(server: &Server) -> Response {
+    Response::json(&NodeInfo { node_id: server.node_id.clone(), current_block_height: 0 })
 }
