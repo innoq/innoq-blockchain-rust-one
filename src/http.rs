@@ -25,15 +25,15 @@ impl<'a> NodeInfo <'a> {
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-struct BlocksResponse {
-    blocks: Vec<Block>,
+struct BlocksResponse<'a> {
+    blocks: &'a Vec<Block>,
     block_height: usize,
 }
 
-impl BlocksResponse {
-    pub fn new(server: &Server) -> BlocksResponse {
+impl<'a, 'b: 'a> BlocksResponse<'a> {
+    pub fn new(server: &'b Server) -> BlocksResponse<'a> {
         BlocksResponse {
-            blocks: server.rusty_chain.clone(),
+            blocks: &server.rusty_chain,
             block_height: server.rusty_chain.len(),
         }
     }
