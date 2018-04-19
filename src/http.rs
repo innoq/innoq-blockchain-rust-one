@@ -42,9 +42,27 @@ impl Server {
             rusty_chain,
         }
     }
+
+    pub fn add_block(&mut self) -> (String, Block) {
+        let mut block;
+        let message;
+
+        {
+            let previous_block = self.rusty_chain.last().unwrap();
+            block = Block::new(vec![], previous_block);
+            let (nanos, hash_rate) = block.mine();
+            message = format!(
+                "Mined a new block in {}ns. Hashing power: {} hashes/s.",
+                nanos, hash_rate
+            );
+        }
+
+        self.rusty_chain.push(block.clone());
+        (message, block)
+    }
 }
 
-pub fn route(server: &Server, request: &Request) -> Response {
+pub fn route(server: &mut Server, request: &Request) -> Response {
     match request.url().as_str() {
         "/" => node_info(server),
         "/blocks" => blocks(server),
@@ -67,14 +85,8 @@ fn blocks(server: &Server) -> Response {
     })
 }
 
-fn mine(server: &Server) -> Response {
-    let previous_block = server.rusty_chain.last().unwrap();
-    let mut block = Block::new(vec![], previous_block);
-    let (nanos, hash_rate) = block.mine();
-    let message = format!(
-        "Mined a new block in {}ns. Hashing power: {} hashes/s.",
-        nanos, hash_rate
-    );
+fn mine(server: &mut Server) -> Response {
+    let (message, block) = server.add_block();
 
     Response::json(&MineResponse {
         block: block,
