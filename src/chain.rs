@@ -16,9 +16,9 @@ pub struct Transaction {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Block {
-    index:u32,
+    index:u64,
     timestamp:u64,
-    proof:u32,
+    proof:u64,
     transactions:Vec<Transaction>,
     previous_block_hash:String,
 }
@@ -67,10 +67,21 @@ impl Block {
         self.hash().starts_with(HASH_PREFIX)
     }
 
-    pub fn mine(&mut self) {
+    pub fn mine(&mut self) -> (u64, u64){
+        let start = SystemTime::now();
+
         while !self.valid() {
             self.proof += 1
         }
+
+        let end = SystemTime::now();
+
+        let duration = end.duration_since(start).unwrap();
+        let nanos:u64 = duration.as_secs() * 1_000_000_000 + (duration.subsec_nanos() as u64);
+
+        let hash_rate = (self.proof*1_000_000_00)/nanos;
+
+        (nanos, hash_rate)
     }
 }
 
@@ -114,6 +125,8 @@ fn test_mining() {
     let previous_block = Block::genesis();
     let mut block = Block::new(Vec::new(), &previous_block);
 
-    block.mine();
+    let (micros, hash_rate) = block.mine();
     assert_eq!(block.valid(), true);
+    println!("{:?}", block);
+    println!("{} {}",micros, hash_rate);
 }
