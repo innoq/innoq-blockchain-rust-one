@@ -6,14 +6,14 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 const HASH_PREFIX: &str = "0000";
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Transaction {
     id:String,
     timestamp:u64,
     payload:String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Block {
     index:u32,
