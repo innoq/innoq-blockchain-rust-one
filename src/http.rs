@@ -14,6 +14,15 @@ struct NodeInfo {
     current_block_height: usize,
 }
 
+impl NodeInfo {
+    pub fn new(server: &Server) -> NodeInfo {
+        NodeInfo {
+            node_id: server.node_id.clone(),
+            current_block_height: server.rusty_chain.len(),
+        }
+    }
+}
+
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 struct BlocksResponse {
@@ -21,11 +30,31 @@ struct BlocksResponse {
     block_height: usize,
 }
 
+impl BlocksResponse {
+    pub fn new(server: &Server) -> BlocksResponse {
+        BlocksResponse {
+            blocks: server.rusty_chain.clone(),
+            block_height: server.rusty_chain.len(),
+        }
+    }
+}
+
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 struct MineResponse {
     message: String,
     block: Block,
+}
+
+impl MineResponse {
+    pub fn new(server: &mut Server) -> MineResponse {
+        let (message, block) = server.add_block();
+
+        MineResponse {
+            block: block,
+            message: message,
+        }
+    }
 }
 
 pub struct Server {
@@ -72,24 +101,13 @@ pub fn route(server: &mut Server, request: &Request) -> Response {
 }
 
 fn node_info(server: &Server) -> Response {
-    Response::json(&NodeInfo {
-        node_id: server.node_id.clone(),
-        current_block_height: server.rusty_chain.len(),
-    })
+    Response::json(&NodeInfo::new(server))
 }
 
 fn blocks(server: &Server) -> Response {
-    Response::json(&BlocksResponse {
-        blocks: server.rusty_chain.clone(),
-        block_height: server.rusty_chain.len(),
-    })
+    Response::json(&BlocksResponse::new(server))
 }
 
 fn mine(server: &mut Server) -> Response {
-    let (message, block) = server.add_block();
-
-    Response::json(&MineResponse {
-        block: block,
-        message: message,
-    })
+    Response::json(&MineResponse::new(server))
 }
