@@ -21,7 +21,7 @@ struct NodeInfo<'a> {
     neighbours: Vec<Node>,
 }
 
-impl<'a> NodeInfo <'a> {
+impl<'a> NodeInfo<'a> {
     pub fn new(server: &'a Server) -> NodeInfo<'a> {
         NodeInfo {
             node_id: &server.node_id,
@@ -70,7 +70,7 @@ pub struct Server {
     pub rusty_chain: Chain,
     pub transaction_buffer: Vec<IntermediateTransaction>,
     is_mining: bool,
-    pub neighbours: Vec<Node>
+    pub neighbours: Vec<Node>,
 }
 
 impl Server {
@@ -119,9 +119,9 @@ pub fn route(server: &Mutex<Server>, request: &Request) -> Response {
         "/" => node_info(server),
         "/blocks" => blocks(server),
         "/mine" => mine(server),
-        "/transactions"  if (request.method() == "POST")  => create_transaction(server, request),
-        "/transactions"  if (request.method() == "GET")  => transactions(server),
-        "/transactions"   => Response::text("invalid method").with_status_code(405),
+        "/transactions"  if (request.method() == "POST") => create_transaction(server, request),
+        _  if (request.url().starts_with("/transactions") && request.method() == "GET") => transactions(server, request),
+        "/transactions" => Response::text("invalid method").with_status_code(405),
         "/nodes/register" if (request.method() == "POST") => register_node(server, request),
         "/nodes/register" => Response::text("invalid method").with_status_code(405),
         _ => Response::text("not found").with_status_code(404),
@@ -146,8 +146,7 @@ fn mine(server_mutex: &Mutex<Server>) -> Response {
     }
     if is_mining {
         Response::text("Already mining! Come back later").with_status_code(412)
-    }
-    else {
+    } else {
         Response::json(&MineResponse::new(server_mutex))
     }
 }
@@ -166,10 +165,33 @@ fn create_transaction(server_mutex: &Mutex<Server>, request: &Request) -> Respon
     Response::json(&new_transaction)
 }
 
-fn transactions(server_mutex: &Mutex<Server>) -> Response {
+fn transactions(server_mutex: &Mutex<Server>, request: &Request) -> Response {
     let server = server_mutex.lock().unwrap();
+    let url = request.url();
+    let id = url.split("/").nth(2);
+
+    match id {
+        None => all_transactions(&server),
+        Some(id) => one_transaction(id, &server)
+    }
+}
+
+fn all_transactions(server:&Server) -> Response {
     Response::json(&server.transaction_buffer)
 }
+
+fn one_transaction(id: &str, server:&Server) -> Response {
+    let search_result = server.transaction_buffer.iter().find(
+        |transaction|
+            transaction.id == id
+    );
+
+    match search_result {
+        Some(ref transaction) => Response::json(&transaction),
+        None => Response::text("Not found").with_status_code(404),
+    }
+}
+
 
 fn register_node(server_mutex: &Mutex<Server>, request: &Request) -> Response {
     let mut server = server_mutex.lock().unwrap();
@@ -185,3 +207,5 @@ fn register_node(server_mutex: &Mutex<Server>, request: &Request) -> Response {
         node,
     })
 }
+
+

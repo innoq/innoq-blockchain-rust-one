@@ -5,10 +5,10 @@ use uuid::Uuid;
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct IntermediateTransaction {
-    id: String,
-    timestamp: u64,
-    payload: String,
-    confirmed: bool,
+    pub id: String,
+    pub timestamp: u64,
+    pub payload: String,
+    pub confirmed: bool,
 }
 
 impl IntermediateTransaction {
