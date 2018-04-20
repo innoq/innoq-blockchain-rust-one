@@ -7,6 +7,7 @@ use self::uuid::Uuid;
 use self::rouille::Request;
 use self::rouille::Response;
 use chain::{Block, Transaction};
+use intermediate_transaction::IntermediateTransaction;
 use std::io::Read;
 use serde_json::Value;
 
@@ -63,7 +64,7 @@ impl MineResponse {
 pub struct Server {
     pub node_id: String,
     pub rusty_chain: Vec<Block>,
-    pub transaction_buffer: Vec<Transaction>,
+    pub transaction_buffer: Vec<IntermediateTransaction>,
 }
 
 impl Server {
@@ -123,15 +124,17 @@ fn mine(server: &mut Server) -> Response {
     Response::json(&MineResponse::new(server))
 }
 
-fn create_transaction(_server: &mut Server, request: &Request) -> Response {
+fn create_transaction(server: &mut Server, request: &Request) -> Response {
     let mut data = request.data().unwrap();
     let mut content = String::new();
     data.read_to_string(&mut content);
     let payload: Value = serde_json::from_str(&content).unwrap();
+    let payload_str = payload.get("payload").unwrap().as_str().unwrap();
 
-    println!("{:?}",payload);
+    let new_transaction = IntermediateTransaction::new(payload_str);
+    server.transaction_buffer.push(new_transaction.clone());
 
-    Response::text("Create transactions")
+    Response::json(&new_transaction)
 }
 
 fn transactions(server: &Server) -> Response {

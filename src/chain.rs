@@ -23,14 +23,18 @@ pub struct Block {
     previous_block_hash: String,
 }
 
+pub fn current_timestamp() -> u64 {
+    let now = SystemTime::now();
+    let duration_since_epoch = now.duration_since(UNIX_EPOCH).unwrap();
+
+    duration_since_epoch.as_secs()
+}
+
 impl Block {
     pub fn new(transactions: Vec<Transaction>, previous_block: &Block) -> Block {
-        let now = SystemTime::now();
-        let duration_since_epoch = now.duration_since(UNIX_EPOCH).unwrap();
-
         Block {
             index: previous_block.index + 1,
-            timestamp: duration_since_epoch.as_secs(),
+            timestamp: current_timestamp(),
             proof: 0,
             transactions: transactions,
             previous_block_hash: previous_block.hash(),
