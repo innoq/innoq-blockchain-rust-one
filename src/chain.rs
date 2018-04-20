@@ -4,29 +4,27 @@ extern crate crypto_hash;
 use crypto_hash::{Algorithm, hex_digest};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-const HASH_PREFIX: &str = "0000";
+const HASH_PREFIX: &str = "000000";
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Transaction {
-    id:String,
-    timestamp:u64,
-    payload:String,
+    id: String,
+    timestamp: u64,
+    payload: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Block {
-    index:u64,
-    timestamp:u64,
-    proof:u64,
-    transactions:Vec<Transaction>,
-    previous_block_hash:String,
+    index: u64,
+    timestamp: u64,
+    proof: u64,
+    transactions: Vec<Transaction>,
+    previous_block_hash: String,
 }
 
 impl Block {
-
     pub fn new(transactions: Vec<Transaction>, previous_block: &Block) -> Block {
-
         let now = SystemTime::now();
         let duration_since_epoch = now.duration_since(UNIX_EPOCH).unwrap();
 
@@ -40,13 +38,13 @@ impl Block {
     }
 
     pub fn genesis() -> Block {
-        let transaction = Transaction{
+        let transaction = Transaction {
             id: String::from("b3c973e2-db05-4eb5-9668-3e81c7389a6d"),
             payload: String::from("I am Heribert Innoq"),
             timestamp: 0,
         };
 
-       Block {
+        Block {
             index: 1,
             timestamp: 0,
             proof: 1917336,
@@ -67,7 +65,7 @@ impl Block {
         self.hash().starts_with(HASH_PREFIX)
     }
 
-    pub fn mine(&mut self) -> (u64, u64){
+    pub fn mine(&mut self) -> (u64, u64) {
         let start = SystemTime::now();
 
         while !self.valid() {
@@ -77,19 +75,17 @@ impl Block {
         let end = SystemTime::now();
 
         let duration = end.duration_since(start).unwrap();
-        let nanos:u64 = duration.as_secs() * 1_000_000_000 + (duration.subsec_nanos() as u64);
+        let nanos: u64 = duration.as_secs() * 1_000_000_000 + (duration.subsec_nanos() as u64);
 
-        let hash_rate = (self.proof*1_000_000_000)/nanos;
+        let hash_rate = (self.proof * 1_000_000_000) / nanos;
 
         (nanos, hash_rate)
     }
 }
 
 
-
 #[test]
 fn test_serialize_genesis_block() {
-
     let genesis = Block::genesis();
 
     assert_eq!("{\"index\":1,\"timestamp\":0,\"proof\":1917336,\"transactions\":[{\"id\":\"b3c973e2-db05-4eb5-9668-3e81c7389a6d\",\"timestamp\":0,\"payload\":\"I am Heribert Innoq\"}],\"previousBlockHash\":\"0\"}", genesis.to_json());
@@ -97,7 +93,6 @@ fn test_serialize_genesis_block() {
 
 #[test]
 fn test_hash_for_genesis_block() {
-
     let genesis = Block::genesis();
 
     assert_eq!("000000b642b67d8bea7cffed1ec990719a3f7837de5ef0f8ede36537e91cdc0e", genesis.hash())
@@ -128,5 +123,16 @@ fn test_mining() {
     let (micros, hash_rate) = block.mine();
     assert_eq!(block.valid(), true);
     println!("{:?}", block);
-    println!("{} {}",micros, hash_rate);
+    println!("{} {}", micros, hash_rate);
+}
+
+#[test]
+fn test_genesis_hash() {
+    let mut genesis = Block::genesis();
+    genesis.proof = 0;
+
+    let (time, rate) = genesis.mine();
+
+    println!("{:?}", genesis);
+    println!("time: {}, rate: {}", time, rate);
 }
