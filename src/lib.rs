@@ -7,4 +7,5 @@ extern crate uuid;
 
 pub mod http;
 pub mod chain;
+pub mod nodes;
 mod intermediate_transaction;

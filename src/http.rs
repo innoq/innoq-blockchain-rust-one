@@ -7,6 +7,7 @@ use self::uuid::Uuid;
 use self::rouille::Request;
 use self::rouille::Response;
 use chain::{Block, Transaction};
+use nodes::*;
 use intermediate_transaction::IntermediateTransaction;
 use std::io::Read;
 use serde_json::Value;
@@ -16,6 +17,7 @@ use serde_json::Value;
 struct NodeInfo<'a> {
     node_id: &'a String,
     current_block_height: usize,
+    neighbours: Vec<Node>,
 }
 
 impl<'a> NodeInfo <'a> {
@@ -23,6 +25,7 @@ impl<'a> NodeInfo <'a> {
         NodeInfo {
             node_id: &server.node_id,
             current_block_height: server.rusty_chain.len(),
+            neighbours: server.neighbours.clone(),
         }
     }
 }
@@ -65,6 +68,7 @@ pub struct Server {
     pub node_id: String,
     pub rusty_chain: Vec<Block>,
     pub transaction_buffer: Vec<IntermediateTransaction>,
+    pub neighbours: Vec<Node>
 }
 
 impl Server {
@@ -73,6 +77,7 @@ impl Server {
             node_id: Uuid::new_v4().to_string(),
             rusty_chain: vec![Block::genesis()],
             transaction_buffer: Vec::new(),
+            neighbours: Vec::new(),
         }
     }
 
@@ -108,6 +113,8 @@ pub fn route(server: &mut Server, request: &Request) -> Response {
         "/transactions"  if (request.method() == "POST")  => create_transaction(server, request),
         "/transactions"  if (request.method() == "GET")  => transactions(server),
         "/transactions"   => Response::text("invalid method").with_status_code(405),
+        "/nodes/register" if (request.method() == "POST") => register_node(server, request),
+        "/nodes/register" => Response::text("invalid method").with_status_code(405),
         _ => Response::text("not found").with_status_code(404),
     }
 }
@@ -127,7 +134,7 @@ fn mine(server: &mut Server) -> Response {
 fn create_transaction(server: &mut Server, request: &Request) -> Response {
     let mut data = request.data().unwrap();
     let mut content = String::new();
-    data.read_to_string(&mut content);
+    data.read_to_string(&mut content).unwrap();
     let payload: Value = serde_json::from_str(&content).unwrap();
     let payload_str = payload.get("payload").unwrap().as_str().unwrap();
 
@@ -139,4 +146,18 @@ fn create_transaction(server: &mut Server, request: &Request) -> Response {
 
 fn transactions(server: &Server) -> Response {
     Response::json(&server.transaction_buffer)
+}
+
+fn register_node(server: &mut Server, request: &Request) -> Response {
+    let mut data = request.data().unwrap();
+    let mut content = String::new();
+    data.read_to_string(&mut content).unwrap();
+    let payload: NodeRegistration = serde_json::from_str(&content).unwrap();
+    let node_id = Uuid::new_v4().to_string();
+    let node = Node { node_id, host: payload.host };
+    server.neighbours.push(node.clone());
+    Response::json(&NodeRegistered {
+        message: String::from("New node added"),
+        node,
+    })
 }
