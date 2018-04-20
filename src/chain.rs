@@ -70,16 +70,13 @@ impl Block {
     pub fn mine(block_candidate: &Block) -> (Block, u64, u64){
         let start = SystemTime::now();
 
-        let mut block = block_candidate.clone();
-        while !block.valid() {
-            block = Block {
-                index: block.index,
-                timestamp: block.timestamp,
-                proof: block.proof + 1,
-                transactions: block.transactions,
-                previous_block_hash: block.previous_block_hash,
-            }
-        }
+        let block = (0..).map(|proof| Block {
+            index: block_candidate.index,
+            timestamp: block_candidate.timestamp,
+            proof: proof,
+            transactions: block_candidate.transactions.clone(),
+            previous_block_hash: block_candidate.previous_block_hash.clone(),
+        }).find(|b| b.valid()).unwrap();
 
         let end = SystemTime::now();
 
