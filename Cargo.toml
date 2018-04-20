@@ -11,3 +11,4 @@ serde_json = "1.0.15"
 reqwest = "0.8.5"
 rouille = "2.1.0"
 uuid = { version = "0.6.3", features = ["v4"] }
+rayon = "1.0.1"
