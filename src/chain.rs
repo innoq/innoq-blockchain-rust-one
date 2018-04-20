@@ -10,9 +10,9 @@ pub type Chain = Vec<Block>;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Transaction {
-    id: String,
-    timestamp: u64,
-    payload: String,
+    pub id: String,
+    pub timestamp: u64,
+    pub payload: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
