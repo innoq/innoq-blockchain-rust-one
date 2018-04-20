@@ -5,7 +5,7 @@ extern crate uuid;
 use self::uuid::Uuid;
 use self::rouille::Request;
 use self::rouille::Response;
-use chain::Block;
+use chain::{Block, Transaction};
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -60,15 +60,15 @@ impl MineResponse {
 pub struct Server {
     pub node_id: String,
     pub rusty_chain: Vec<Block>,
+    pub transaction_buffer: Vec<Transaction>,
 }
 
 impl Server {
     pub fn new() -> Server {
-        let node_id = Uuid::new_v4().to_string();
-        let rusty_chain: Vec<Block> = vec![Block::genesis()];
         Server {
-            node_id,
-            rusty_chain,
+            node_id: Uuid::new_v4().to_string(),
+            rusty_chain: vec![Block::genesis()],
+            transaction_buffer: Vec::new(),
         }
     }
 
@@ -96,6 +96,9 @@ pub fn route(server: &mut Server, request: &Request) -> Response {
         "/" => node_info(server),
         "/blocks" => blocks(server),
         "/mine" => mine(server),
+        "/transactions"  if (request.method() == "POST")  => create_transaction(server, request),
+        "/transactions"  if (request.method() == "GET")  => transactions(server),
+        "/transactions"   => Response::text("invalid method").with_status_code(405),
         _ => Response::text("not found").with_status_code(404),
     }
 }
@@ -110,4 +113,13 @@ fn blocks(server: &Server) -> Response {
 
 fn mine(server: &mut Server) -> Response {
     Response::json(&MineResponse::new(server))
+}
+
+fn create_transaction(_server: &mut Server, _request: &Request) -> Response {
+    Response::text("Create transactions")
+}
+
+fn transactions(_server: &Server) -> Response {
+    Response::text("transactions")
+
 }
