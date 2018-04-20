@@ -32,6 +32,20 @@ pub fn current_timestamp() -> u64 {
     duration_since_epoch.as_secs()
 }
 
+pub fn validate(chain: &Chain) -> bool {
+    let mut hash = String::from("0");
+    for block in chain.iter() {
+        if hash != block.previous_block_hash {
+            return false;
+        }
+        hash = block.hash();
+        if !hash.starts_with(HASH_PREFIX) {
+            return false;
+        }
+    }
+    true
+}
+
 impl Block {
     pub fn new(transactions: Vec<Transaction>, previous_block: &Block) -> Block {
         Block {
@@ -143,4 +157,28 @@ fn test_genesis_hash() {
 
     println!("{:?}", genesis);
     println!("time: {}, rate: {}", time, rate);
+}
+
+#[test]
+fn test_validate_genesis() {
+    let genesis = Block::genesis();
+    let chain = vec![genesis];
+    assert!(validate(&chain));
+}
+
+#[test]
+fn test_validate_bogus() {
+    let genesis = Block::genesis();
+    let block = Block::new(Vec::new(), &genesis);
+    let chain = vec![genesis, block];
+    assert!(!validate(&chain));
+}
+
+#[test]
+fn test_validate_mined() {
+    let genesis = Block::genesis();
+    let mut block = Block::new(Vec::new(), &genesis);
+    block.mine();
+    let chain = vec![genesis, block];
+    assert!(validate(&chain));
 }
