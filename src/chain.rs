@@ -6,7 +6,7 @@ use crypto_hash::{Algorithm, hex_digest};
 use std::time::{SystemTime, UNIX_EPOCH};
 use self::rayon::prelude::*;
 
-const HASH_PREFIX: &str = "0000";
+const HASH_PREFIX: &str = "000000";
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Transaction {
