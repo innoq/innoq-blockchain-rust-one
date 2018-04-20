@@ -72,6 +72,11 @@ impl Server {
         }
     }
 
+    pub fn transactions(&self) -> Box<Iterator<Item=Transaction>> {
+        let chain = self.rusty_chain.clone();
+        Box::new(chain.into_iter().flat_map(|block| block.transactions.clone()))
+    }
+
     pub fn add_block(&mut self) -> (String, Block) {
         let mut block;
         let message;
