@@ -49,6 +49,10 @@ pub fn validate(chain: &Chain) -> bool {
     true
 }
 
+pub fn transactions(chain: &Chain) -> Vec<Transaction> {
+    chain.iter().flat_map(|block| block.transactions.clone()).collect()
+}
+
 impl Block {
     pub fn new(transactions: Vec<Transaction>, previous_block: &Block) -> Block {
         Block {

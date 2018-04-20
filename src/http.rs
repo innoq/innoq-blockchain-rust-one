@@ -6,6 +6,7 @@ extern crate uuid;
 use self::uuid::Uuid;
 use self::rouille::Request;
 use self::rouille::Response;
+use chain;
 use chain::{Block, Chain, Transaction};
 use nodes::*;
 use intermediate_transaction::IntermediateTransaction;
@@ -84,9 +85,8 @@ impl Server {
         }
     }
 
-    pub fn transactions(&self) -> Box<Iterator<Item=Transaction>> {
-        let chain = self.rusty_chain.clone();
-        Box::new(chain.into_iter().flat_map(|block| block.transactions.clone()))
+    pub fn transactions(&self) -> Vec<Transaction> {
+        chain::transactions(&self.rusty_chain)
     }
 
     pub fn add_block(server_mutex: &Mutex<Server>) -> (String, Block) {
