@@ -77,6 +77,14 @@ impl Block {
         serde_json::to_string(self).unwrap()
     }
 
+    /// This function calculates the hash of this block.
+    ///
+    /// The Genesis block should have a known hash:
+    /// ```
+    /// use rustychain::chain::Block;
+    /// let hash = Block::genesis().hash();
+    /// assert_eq!(hash, "000000b642b67d8bea7cffed1ec990719a3f7837de5ef0f8ede36537e91cdc0e")
+    /// ```
     pub fn hash(&self) -> String {
         hex_digest(Algorithm::SHA256, self.to_json().as_bytes())
     }
