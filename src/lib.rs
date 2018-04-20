@@ -6,3 +6,4 @@ extern crate crypto_hash;
 
 pub mod http;
 pub mod chain;
+pub mod nodes;
