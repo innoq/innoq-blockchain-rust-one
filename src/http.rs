@@ -73,13 +73,13 @@ impl Server {
     }
 
     pub fn add_block(&mut self) -> (String, Block) {
-        let mut block;
         let message;
-
+        let block;
         {
             let previous_block = self.rusty_chain.last().unwrap();
-            block = Block::new(vec![], previous_block);
-            let (nanos, hash_rate) = block.mine();
+            let block_candidate = Block::new(vec![], previous_block);
+            let (b, nanos, hash_rate) = Block::mine(&block_candidate);
+            block = b;
             message = format!(
                 "Mined a new block in {}ns. Hashing power: {} hashes/s.",
                 nanos, hash_rate
