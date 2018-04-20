@@ -1,7 +1,7 @@
-extern crate serde_json;
 extern crate crypto_hash;
+extern crate serde_json;
 
-use crypto_hash::{Algorithm, hex_digest};
+use crypto_hash::{hex_digest, Algorithm};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 const HASH_PREFIX: &str = "000000";
@@ -54,7 +54,7 @@ impl Block {
             index: 1,
             timestamp: 0,
             proof: 1917336,
-            transactions: vec!(transaction),
+            transactions: vec![transaction],
             previous_block_hash: String::from("0"),
         }
     }
@@ -89,7 +89,6 @@ impl Block {
     }
 }
 
-
 #[test]
 fn test_serialize_genesis_block() {
     let genesis = Block::genesis();
@@ -101,7 +100,10 @@ fn test_serialize_genesis_block() {
 fn test_hash_for_genesis_block() {
     let genesis = Block::genesis();
 
-    assert_eq!("000000b642b67d8bea7cffed1ec990719a3f7837de5ef0f8ede36537e91cdc0e", genesis.hash())
+    assert_eq!(
+        "000000b642b67d8bea7cffed1ec990719a3f7837de5ef0f8ede36537e91cdc0e",
+        genesis.hash()
+    )
 }
 
 #[test]
