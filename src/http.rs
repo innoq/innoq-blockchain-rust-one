@@ -16,6 +16,7 @@ use serde_json::Value;
 struct NodeInfo<'a> {
     node_id: &'a String,
     current_block_height: usize,
+    neighbours: Vec<Node>,
 }
 
 impl<'a> NodeInfo <'a> {
@@ -23,6 +24,7 @@ impl<'a> NodeInfo <'a> {
         NodeInfo {
             node_id: &server.node_id,
             current_block_height: server.rusty_chain.len(),
+            neighbours: server.neighbours.clone(),
         }
     }
 }
