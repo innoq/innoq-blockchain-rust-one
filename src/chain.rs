@@ -6,6 +6,8 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 const HASH_PREFIX: &str = "000000";
 
+pub type Chain = Vec<Block>;
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Transaction {
     id: String,

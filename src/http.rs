@@ -6,7 +6,7 @@ extern crate uuid;
 use self::uuid::Uuid;
 use self::rouille::Request;
 use self::rouille::Response;
-use chain::{Block, Transaction};
+use chain::{Block, Chain, Transaction};
 use nodes::*;
 use intermediate_transaction::IntermediateTransaction;
 use std::io::Read;
@@ -33,7 +33,7 @@ impl<'a> NodeInfo <'a> {
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 struct BlocksResponse<'a> {
-    blocks: &'a Vec<Block>,
+    blocks: &'a Chain,
     block_height: usize,
 }
 
@@ -66,7 +66,7 @@ impl MineResponse {
 
 pub struct Server {
     pub node_id: String,
-    pub rusty_chain: Vec<Block>,
+    pub rusty_chain: Chain,
     pub transaction_buffer: Vec<IntermediateTransaction>,
     pub neighbours: Vec<Node>
 }
