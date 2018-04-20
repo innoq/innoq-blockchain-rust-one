@@ -92,14 +92,25 @@ impl Server {
     pub fn add_block(server_mutex: &Mutex<Server>) -> (String, Block) {
         let mut block;
         let message;
+        let transactions: Vec<Transaction>;
 
         {
             let previous_block = {
                 let mut server = server_mutex.lock().unwrap();
                 server.is_mining = true;
+                transactions = server
+                    .transaction_buffer
+                    .iter()
+                    .take(5)
+                    .map(|it| Transaction {
+                        id: it.id.clone(),
+                        timestamp: it.timestamp,
+                        payload: it.payload.clone(),
+                    })
+                    .collect();
                 server.rusty_chain.last().unwrap().clone()
             };
-            block = Block::new(vec![], &previous_block);
+            block = Block::new(transactions, &previous_block);
             let (nanos, hash_rate) = block.mine();
             message = format!(
                 "Mined a new block in {}ns. Hashing power: {} hashes/s.",
@@ -109,6 +120,10 @@ impl Server {
 
         let mut server = server_mutex.lock().unwrap();
         server.rusty_chain.push(block.clone());
+        server.transaction_buffer.retain(|it| block
+            .transactions
+            .iter()
+            .any(|t| t.id != it.id));
         server.is_mining = false;
         (message, block)
     }
