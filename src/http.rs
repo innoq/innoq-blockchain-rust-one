@@ -1,11 +1,14 @@
 extern crate rouille;
 extern crate serde;
+extern crate serde_json;
 extern crate uuid;
 
 use self::uuid::Uuid;
 use self::rouille::Request;
 use self::rouille::Response;
 use chain::{Block, Transaction};
+use std::io::Read;
+use serde_json::Value;
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -115,11 +118,17 @@ fn mine(server: &mut Server) -> Response {
     Response::json(&MineResponse::new(server))
 }
 
-fn create_transaction(_server: &mut Server, _request: &Request) -> Response {
+fn create_transaction(_server: &mut Server, request: &Request) -> Response {
+    let mut data = request.data().unwrap();
+    let mut content = String::new();
+    data.read_to_string(&mut content);
+    let payload: Value = serde_json::from_str(&content).unwrap();
+
+    println!("{:?}",payload);
+
     Response::text("Create transactions")
 }
 
-fn transactions(_server: &Server) -> Response {
-    Response::text("transactions")
-
+fn transactions(server: &Server) -> Response {
+    Response::json(&server.transaction_buffer)
 }
