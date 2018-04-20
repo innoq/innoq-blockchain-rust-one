@@ -55,10 +55,8 @@ struct MineResponse {
 }
 
 impl MineResponse {
-    pub fn new(server: &mut Server) -> MineResponse {
-        server.is_mining = true;
-        let (message, block) = server.add_block();
-        server.is_mining = false;
+    pub fn new(server_mutex: &Mutex<Server>) -> MineResponse {
+        let (message, block) = Server::add_block(server_mutex);
 
         MineResponse {
             block: block,
@@ -91,13 +89,17 @@ impl Server {
         Box::new(chain.into_iter().flat_map(|block| block.transactions.clone()))
     }
 
-    pub fn add_block(&mut self) -> (String, Block) {
+    pub fn add_block(server_mutex: &Mutex<Server>) -> (String, Block) {
         let mut block;
         let message;
 
         {
-            let previous_block = self.rusty_chain.last().unwrap();
-            block = Block::new(vec![], previous_block);
+            let previous_block = {
+                let mut server = server_mutex.lock().unwrap();
+                server.is_mining = true;
+                server.rusty_chain.last().unwrap().clone()
+            };
+            block = Block::new(vec![], &previous_block);
             let (nanos, hash_rate) = block.mine();
             message = format!(
                 "Mined a new block in {}ns. Hashing power: {} hashes/s.",
@@ -105,7 +107,9 @@ impl Server {
             );
         }
 
-        self.rusty_chain.push(block.clone());
+        let mut server = server_mutex.lock().unwrap();
+        server.rusty_chain.push(block.clone());
+        server.is_mining = false;
         (message, block)
     }
 }
@@ -144,8 +148,7 @@ fn mine(server_mutex: &Mutex<Server>) -> Response {
         Response::text("Already mining! Come back later").with_status_code(412)
     }
     else {
-        let mut server = server_mutex.lock().unwrap();
-        Response::json(&MineResponse::new(&mut server))
+        Response::json(&MineResponse::new(server_mutex))
     }
 }
 
