@@ -38,6 +38,9 @@ pub fn validate(chain: &Chain) -> bool {
         if hash != block.previous_block_hash {
             return false;
         }
+        if block.transactions.len() > 5 {
+            return false;
+        }
         hash = block.hash();
         if !hash.starts_with(HASH_PREFIX) {
             return false;
@@ -175,7 +178,16 @@ fn test_validate_genesis() {
 }
 
 #[test]
-fn test_validate_bogus() {
+fn test_validate_mined() {
+    let genesis = Block::genesis();
+    let mut block = Block::new(Vec::new(), &genesis);
+    block.mine();
+    let chain = vec![genesis, block];
+    assert!(validate(&chain));
+}
+
+#[test]
+fn test_validate_unmined() {
     let genesis = Block::genesis();
     let block = Block::new(Vec::new(), &genesis);
     let chain = vec![genesis, block];
@@ -183,10 +195,18 @@ fn test_validate_bogus() {
 }
 
 #[test]
-fn test_validate_mined() {
+fn test_validate_too_many_transactions() {
+    fn tx(id: u64) -> Transaction {
+        Transaction {
+            id: format!("{}", id),
+            timestamp: id,
+            payload: format!("{}", id),
+        }
+    }
+    let transactions = (1..=6).map(tx).collect();
     let genesis = Block::genesis();
-    let mut block = Block::new(Vec::new(), &genesis);
+    let mut block = Block::new(transactions, &genesis);
     block.mine();
     let chain = vec![genesis, block];
-    assert!(validate(&chain));
+    assert!(!validate(&chain));
 }
