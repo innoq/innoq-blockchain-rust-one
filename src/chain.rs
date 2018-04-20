@@ -2,6 +2,7 @@ extern crate crypto_hash;
 extern crate serde_json;
 
 use crypto_hash::{hex_digest, Algorithm};
+use std::collections::HashSet;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 const HASH_PREFIX: &str = "000000";
@@ -47,6 +48,16 @@ pub fn validate(chain: &Chain) -> bool {
         }
     }
     true
+}
+
+pub fn choose(this: Chain, that: Chain) -> (Chain, Vec<Transaction>) {
+    if !validate(&that) || that.len() < this.len() {
+        return (this, vec![]);
+    }
+    let ids: HashSet<String> = transactions(&that).into_iter().map(|t| t.id).collect();
+    let mut txs = transactions(&this);
+    txs.retain(|tx| ids.contains(&tx.id));
+    (that, txs)
 }
 
 pub fn transactions(chain: &Chain) -> Vec<Transaction> {
