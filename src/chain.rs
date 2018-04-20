@@ -19,7 +19,7 @@ pub struct Block {
     index: u64,
     timestamp: u64,
     proof: u64,
-    transactions: Vec<Transaction>,
+    pub transactions: Vec<Transaction>,
     previous_block_hash: String,
 }
 
