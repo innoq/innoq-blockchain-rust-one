@@ -11,6 +11,7 @@ use nodes::*;
 use intermediate_transaction::IntermediateTransaction;
 use std::io::Read;
 use serde_json::Value;
+use std::sync::Mutex;
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -55,7 +56,9 @@ struct MineResponse {
 
 impl MineResponse {
     pub fn new(server: &mut Server) -> MineResponse {
+        server.is_mining = true;
         let (message, block) = server.add_block();
+        server.is_mining = false;
 
         MineResponse {
             block: block,
@@ -68,6 +71,7 @@ pub struct Server {
     pub node_id: String,
     pub rusty_chain: Chain,
     pub transaction_buffer: Vec<IntermediateTransaction>,
+    is_mining: bool,
     pub neighbours: Vec<Node>
 }
 
@@ -77,6 +81,7 @@ impl Server {
             node_id: Uuid::new_v4().to_string(),
             rusty_chain: vec![Block::genesis()],
             transaction_buffer: Vec::new(),
+            is_mining: false,
             neighbours: Vec::new(),
         }
     }
@@ -105,7 +110,7 @@ impl Server {
     }
 }
 
-pub fn route(server: &mut Server, request: &Request) -> Response {
+pub fn route(server: &Mutex<Server>, request: &Request) -> Response {
     match request.url().as_str() {
         "/" => node_info(server),
         "/blocks" => blocks(server),
@@ -119,19 +124,33 @@ pub fn route(server: &mut Server, request: &Request) -> Response {
     }
 }
 
-fn node_info(server: &Server) -> Response {
-    Response::json(&NodeInfo::new(server))
+fn node_info(server_mutex: &Mutex<Server>) -> Response {
+    let server = server_mutex.lock().unwrap();
+    Response::json(&NodeInfo::new(&server))
 }
 
-fn blocks(server: &Server) -> Response {
-    Response::json(&BlocksResponse::new(server))
+fn blocks(server_mutex: &Mutex<Server>) -> Response {
+    let server = server_mutex.lock().unwrap();
+    Response::json(&BlocksResponse::new(&server))
 }
 
-fn mine(server: &mut Server) -> Response {
-    Response::json(&MineResponse::new(server))
+fn mine(server_mutex: &Mutex<Server>) -> Response {
+    let is_mining;
+    {
+        let server = server_mutex.lock().unwrap();
+        is_mining = server.is_mining;
+    }
+    if is_mining {
+        Response::text("Already mining! Come back later").with_status_code(412)
+    }
+    else {
+        let mut server = server_mutex.lock().unwrap();
+        Response::json(&MineResponse::new(&mut server))
+    }
 }
 
-fn create_transaction(server: &mut Server, request: &Request) -> Response {
+fn create_transaction(server_mutex: &Mutex<Server>, request: &Request) -> Response {
+    let mut server = server_mutex.lock().unwrap();
     let mut data = request.data().unwrap();
     let mut content = String::new();
     data.read_to_string(&mut content).unwrap();
@@ -144,11 +163,13 @@ fn create_transaction(server: &mut Server, request: &Request) -> Response {
     Response::json(&new_transaction)
 }
 
-fn transactions(server: &Server) -> Response {
+fn transactions(server_mutex: &Mutex<Server>) -> Response {
+    let server = server_mutex.lock().unwrap();
     Response::json(&server.transaction_buffer)
 }
 
-fn register_node(server: &mut Server, request: &Request) -> Response {
+fn register_node(server_mutex: &Mutex<Server>, request: &Request) -> Response {
+    let mut server = server_mutex.lock().unwrap();
     let mut data = request.data().unwrap();
     let mut content = String::new();
     data.read_to_string(&mut content).unwrap();
