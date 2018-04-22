@@ -76,6 +76,10 @@ impl Block {
     }
 
     pub fn genesis() -> Block {
+        Block::genesis_proof(1917336)
+    }
+
+    pub fn genesis_proof(proof: u64) -> Block {
         let transaction = Transaction {
             id: String::from("b3c973e2-db05-4eb5-9668-3e81c7389a6d"),
             payload: String::from("I am Heribert Innoq"),
@@ -85,10 +89,16 @@ impl Block {
         Block {
             index: 1,
             timestamp: 0,
-            proof: 1917336,
+            proof,
             transactions: vec![transaction],
             previous_block_hash: String::from("0"),
         }
+    }
+
+    pub fn with_proof(&self, proof: u64) -> Block {
+        let mut block = self.clone();
+        block.proof = proof;
+        block
     }
 
     pub fn to_json(&self) -> String {
