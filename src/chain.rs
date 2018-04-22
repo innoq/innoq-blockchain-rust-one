@@ -227,3 +227,90 @@ fn test_validate_too_many_transactions() {
     let chain = vec![genesis, block];
     assert!(!validate(&chain));
 }
+
+#[cfg(test)]
+mod benchmarks {
+    use super::Block;
+
+    use crypto_hash::{digest, hex_digest, Algorithm, Hasher};
+    use serde_json;
+    use std::io::Write;
+    use test::{black_box, Bencher};
+
+    const PREFIX_STRING: &str = "0000";
+    const PREFIX_BYTES: &[u8] = &[0, 0];
+
+    #[bench]
+    fn bench_mine_loop_string(b: &mut Bencher) {
+        let mut genesis = Block::genesis();
+        genesis.proof = 0;
+
+        fn validate(block: &Block) -> bool {
+            hex_digest(
+                Algorithm::SHA256,
+                serde_json::to_string(block).unwrap().as_bytes(),
+            ).starts_with(PREFIX_STRING)
+        }
+
+        b.iter(|| {
+            while !validate(&genesis) {
+                genesis.proof += 1;
+            }
+            black_box(genesis.proof);
+        });
+    }
+
+    #[bench]
+    fn bench_mine_loop_bytes_hex(b: &mut Bencher) {
+        let mut genesis = Block::genesis();
+        genesis.proof = 0;
+
+        fn validate(block: &Block) -> bool {
+            hex_digest(Algorithm::SHA256, &serde_json::to_vec(block).unwrap())
+                .starts_with(PREFIX_STRING)
+        }
+
+        b.iter(|| {
+            while !validate(&genesis) {
+                genesis.proof += 1;
+            }
+            black_box(genesis.proof);
+        });
+    }
+
+    #[bench]
+    fn bench_mine_loop_bytes(b: &mut Bencher) {
+        let mut genesis = Block::genesis();
+        genesis.proof = 0;
+
+        fn validate(block: &Block) -> bool {
+            digest(Algorithm::SHA256, &serde_json::to_vec(block).unwrap()).starts_with(PREFIX_BYTES)
+        }
+
+        b.iter(|| {
+            while !validate(&genesis) {
+                genesis.proof += 1;
+            }
+            black_box(genesis.proof);
+        });
+    }
+
+    #[bench]
+    fn bench_mine_loop_writer(b: &mut Bencher) {
+        let mut genesis = Block::genesis();
+        genesis.proof = 0;
+
+        fn validate(block: &Block) -> bool {
+            let mut h = Hasher::new(Algorithm::SHA256);
+            serde_json::to_writer(h.by_ref(), block).unwrap();
+            h.finish().starts_with(PREFIX_BYTES)
+        }
+
+        b.iter(|| {
+            while !validate(&genesis) {
+                genesis.proof += 1;
+            }
+            black_box(genesis.proof);
+        });
+    }
+}
