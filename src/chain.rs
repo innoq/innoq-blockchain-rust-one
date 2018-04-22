@@ -249,6 +249,7 @@ mod benchmarks {
 
     const PREFIX_STRING: &str = "0000";
     const PREFIX_BYTES: &[u8] = &[0, 0];
+    const DEFAULT_PROOF: u64 = 0x123456789ABCDEF0;
 
     #[bench]
     fn bench_mine_loop_string(b: &mut Bencher) {
@@ -321,6 +322,77 @@ mod benchmarks {
                 genesis.proof += 1;
             }
             black_box(genesis.proof);
+        });
+    }
+
+    #[bench]
+    fn bench_mine_iter_bytes(b: &mut Bencher) {
+        let genesis = Block::genesis_proof(0);
+
+        fn validate(block: &Block) -> bool {
+            digest(Algorithm::SHA256, &serde_json::to_vec(block).unwrap()).starts_with(PREFIX_BYTES)
+        }
+
+        b.iter(|| {
+            let proof = (0..)
+                .find(|&proof| {
+                    let block = genesis.with_proof(proof);
+                    validate(&block)
+                })
+                .unwrap();
+            black_box(proof);
+        });
+    }
+
+    #[bench]
+    fn bench_mine_iter_bytes_splice(b: &mut Bencher) {
+        let genesis = Block::genesis_proof(DEFAULT_PROOF);
+        let haystack = serde_json::to_vec(&genesis).unwrap();
+        let needle = serde_json::to_vec(&DEFAULT_PROOF).unwrap();
+        let slice = needle.as_slice();
+        let index = haystack
+            .windows(needle.len())
+            .position(|w| w == slice)
+            .unwrap();
+        let range = index..index + needle.len();
+
+        let validate = |proof: &u64| {
+            let repl = serde_json::to_vec(&proof).unwrap();
+            let mut b = haystack.clone();
+            b.splice(range.clone(), repl);
+            digest(Algorithm::SHA256, &b).starts_with(PREFIX_BYTES)
+        };
+
+        b.iter(|| {
+            let proof = (0..).find(validate).unwrap();
+            black_box(proof);
+        });
+    }
+
+    #[bench]
+    fn bench_mine_iter_bytes_write(b: &mut Bencher) {
+        let genesis = Block::genesis_proof(DEFAULT_PROOF);
+        let haystack = serde_json::to_vec(&genesis).unwrap();
+        let needle = serde_json::to_vec(&DEFAULT_PROOF).unwrap();
+        let slice = needle.as_slice();
+        let index = haystack
+            .windows(needle.len())
+            .position(|w| w == slice)
+            .unwrap();
+        let (prefix, temp) = haystack.split_at(index);
+        let (_, suffix) = temp.split_at(needle.len());
+
+        let validate = |proof: &u64| {
+            let mut h = Hasher::new(Algorithm::SHA256);
+            h.write_all(prefix).unwrap();
+            h.write_all(&serde_json::to_vec(&proof).unwrap()).unwrap();
+            h.write_all(suffix).unwrap();
+            h.finish().starts_with(PREFIX_BYTES)
+        };
+
+        b.iter(|| {
+            let proof = (0..).find(validate).unwrap();
+            black_box(proof);
         });
     }
 }
