@@ -164,7 +164,8 @@ fn test_validity() {
 }
 
 #[test]
-fn test_mining() {
+#[ignore]
+fn test_mine() {
     let previous_block = Block::genesis();
     let mut block = Block::new(Vec::new(), &previous_block);
 
@@ -175,7 +176,8 @@ fn test_mining() {
 }
 
 #[test]
-fn test_genesis_hash() {
+#[ignore]
+fn test_genesis_mine() {
     let mut genesis = Block::genesis();
     genesis.proof = 0;
 
