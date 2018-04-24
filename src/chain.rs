@@ -254,7 +254,6 @@ mod benchmarks {
     #[bench]
     fn bench_mine_loop_string(b: &mut Bencher) {
         let mut genesis = Block::genesis();
-        genesis.proof = 0;
 
         fn validate(block: &Block) -> bool {
             hex_digest(
@@ -264,6 +263,7 @@ mod benchmarks {
         }
 
         b.iter(|| {
+            genesis.proof = 0;
             while !validate(&genesis) {
                 genesis.proof += 1;
             }
@@ -274,7 +274,6 @@ mod benchmarks {
     #[bench]
     fn bench_mine_loop_bytes_hex(b: &mut Bencher) {
         let mut genesis = Block::genesis();
-        genesis.proof = 0;
 
         fn validate(block: &Block) -> bool {
             hex_digest(Algorithm::SHA256, &serde_json::to_vec(block).unwrap())
@@ -282,6 +281,7 @@ mod benchmarks {
         }
 
         b.iter(|| {
+            genesis.proof = 0;
             while !validate(&genesis) {
                 genesis.proof += 1;
             }
@@ -292,13 +292,13 @@ mod benchmarks {
     #[bench]
     fn bench_mine_loop_bytes(b: &mut Bencher) {
         let mut genesis = Block::genesis();
-        genesis.proof = 0;
 
         fn validate(block: &Block) -> bool {
             digest(Algorithm::SHA256, &serde_json::to_vec(block).unwrap()).starts_with(PREFIX_BYTES)
         }
 
         b.iter(|| {
+            genesis.proof = 0;
             while !validate(&genesis) {
                 genesis.proof += 1;
             }
@@ -309,7 +309,6 @@ mod benchmarks {
     #[bench]
     fn bench_mine_loop_writer(b: &mut Bencher) {
         let mut genesis = Block::genesis();
-        genesis.proof = 0;
 
         fn validate(block: &Block) -> bool {
             let mut h = Hasher::new(Algorithm::SHA256);
@@ -318,6 +317,7 @@ mod benchmarks {
         }
 
         b.iter(|| {
+            genesis.proof = 0;
             while !validate(&genesis) {
                 genesis.proof += 1;
             }
@@ -327,7 +327,7 @@ mod benchmarks {
 
     #[bench]
     fn bench_mine_iter_bytes(b: &mut Bencher) {
-        let genesis = Block::genesis_proof(0);
+        let genesis = Block::genesis();
 
         fn validate(block: &Block) -> bool {
             digest(Algorithm::SHA256, &serde_json::to_vec(block).unwrap()).starts_with(PREFIX_BYTES)
